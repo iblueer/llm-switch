@@ -6,21 +6,21 @@
 
 - Bash 或 Zsh（系统默认即可）
 - 基础 UNIX 工具（tar、cp、mkdir 等）
-- 能够执行 `install-locally.sh`
+- 能够执行 `install.sh`
 
 ## 安装步骤
 
 ### 1. 打包 llm-switch 目录
 
-在可以访问仓库的机器上，进入项目的 `llm-switch` 子目录并打包：
+在可以访问仓库的机器上，进入项目目录并打包：
 
 ```sh
-cd zsh-claude-tools/llm-switch
+cd llm-switch
 tar -czf llm-switch.tar.gz \
   llm-switch.zsh \
   llm-switch.bash \
-  install-locally.sh \
-  INSTALL_OFFLINE.md
+  install.sh \
+  README.md
 ```
 
 ### 2. 传输到目标机器
@@ -38,7 +38,7 @@ ssh user@server
 cd /tmp
 tar -xzf llm-switch.tar.gz
 cd llm-switch
-./install-locally.sh
+./install.sh
 ```
 
 ### 4. 重新加载 Shell 配置并验证
@@ -71,7 +71,7 @@ export LLM_MODEL_NAME=""
 若需要查看详细安装过程，可启用调试：
 
 ```sh
-LLM_SWITCH_DEBUG=1 ./install-locally.sh
+LLM_SWITCH_DEBUG=1 ./install.sh
 ```
 
 ## 卸载
