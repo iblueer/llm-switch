@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # llm-switch 本地安装脚本
-# 使用方式：将项目源码复制到本地，进入 llm-switch 目录后执行 ./install-locally.sh
+# 使用方式：将项目源码复制到本地，进入 llm-switch 目录后执行 ./install.sh
 
 set -eu
 [ "${LLM_SWITCH_DEBUG:-0}" = "1" ] && set -x
