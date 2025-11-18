@@ -36,8 +36,14 @@ remove_marked_block "$RC_ZSH" "$BEGIN_MARK" "$END_MARK"
 remove_marked_block "$RC_BASH" "$BEGIN_MARK" "$END_MARK"
 
 if [ -d "$INSTALL_ROOT" ]; then
-  rm -rf "$INSTALL_ROOT"
-  printf '🧹 已删除 llm-switch 安装目录：%s\n' "$INSTALL_ROOT"
+  # 仅移除可再生成的文件/目录，保留用户的 envs 配置
+  rm -rf "$INSTALL_ROOT/bin" 2>/dev/null || true
+  rm -f "$INSTALL_ROOT/init.bash" "$INSTALL_ROOT/init.zsh" 2>/dev/null || true
+  # 如目录为空（不包含 envs），再尝试清理空目录层级
+  if [ ! -d "$INSTALL_ROOT/envs" ]; then
+    rmdir "$INSTALL_ROOT" 2>/dev/null || true
+  fi
+  printf '🧹 已清理 llm-switch 可执行与初始化文件（已保留 %s/envs）\n' "$INSTALL_ROOT"
 else
   printf 'ℹ️  未发现 llm-switch 安装目录：%s\n' "$INSTALL_ROOT"
 fi

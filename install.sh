@@ -38,6 +38,10 @@ BEGIN_MARK="# >>> ${PROJECT_ID} BEGIN (managed) >>>"
 END_MARK="# <<< ${PROJECT_ID} END   <<<"
 
 echo "[Step 0] 创建安装目录：$INSTALL_ROOT"
+pre_exists=0
+if [ -d "$INSTALL_ROOT" ]; then
+  pre_exists=1
+fi
 mkdir -p "$BIN_DIR"
 
 echo "[Step 1] 复制脚本到 $BIN_DIR"
@@ -51,8 +55,9 @@ echo "[Step 2] 准备环境目录：$ENV_DIR"
 mkdir -p "$ENV_DIR"
 
 DEFAULT_ENV="$ENV_DIR/default.env"
-if [ ! -f "$DEFAULT_ENV" ]; then
-  echo "[Step 2] 创建默认环境：$DEFAULT_ENV"
+if [ "$pre_exists" = 0 ]; then
+  if [ ! -f "$DEFAULT_ENV" ]; then
+    echo "[Step 2] 创建默认环境：$DEFAULT_ENV"
 cat >"$DEFAULT_ENV" <<'E'
 # llm-switch 默认环境模板
 export LLM_PROVIDER=""
@@ -60,7 +65,10 @@ export LLM_API_KEY=""
 export LLM_BASE_URL=""
 export LLM_MODEL_NAME=""
 E
-  chmod 600 "$DEFAULT_ENV" 2>/dev/null || true
+    chmod 600 "$DEFAULT_ENV" 2>/dev/null || true
+  fi
+else
+  echo "[Step 2] 检测到已存在 $INSTALL_ROOT，跳过 default.env 创建，保持现有 envs 不变"
 fi
 
 echo "[Step 3] 生成 init：$INIT_FILE"
