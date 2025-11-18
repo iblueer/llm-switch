@@ -60,6 +60,29 @@ for _cand in "$HOME/.local/bin/llm-switch" "$HOME/bin/llm-switch"; do
   fi
 done
 
+# 在 PATH 中扫描所有名为 llm-switch 的可执行，若为包装器/指向安装目录则删除
+IFS=":" read -r -a _path_dirs <<< "${PATH:-}"
+for _dir in "${_path_dirs[@]}"; do
+  [ -n "$_dir" ] || continue
+  _cand="$_dir/llm-switch"
+  [ -e "$_cand" ] || continue
+  # 仅对可写目标进行处理，避免误删系统文件
+  [ -w "$_cand" ] || continue
+  if [ -L "$_cand" ]; then
+    _target="$(readlink "$_cand" 2>/dev/null || true)"
+    case "$_target" in
+      "$INSTALL_ROOT"/*|*/.llm-switch/bin/*)
+        rm -f -- "$_cand" && printf '🧹 已删除 PATH 中的包装脚本：%s -> %s\n' "$_cand" "$_target"
+        ;;
+    esac
+  elif [ -f "$_cand" ]; then
+    if grep -F -q "/.llm-switch/bin/llm-switch" "$_cand" 2>/dev/null \
+       || grep -F -q "llm-switch 包装脚本" "$_cand" 2>/dev/null ; then
+      rm -f -- "$_cand" && printf '🧹 已删除 PATH 中的包装脚本：%s\n' "$_cand"
+    fi
+  fi
+done
+
 printf '\nllm-switch 已卸载。若 shell 仍在运行，请执行：\n  exec "$SHELL" -l\n或手动 source 对应的 rc 文件以刷新环境。\n'
 
 # 额外处理：尝试从当前 Shell 会话中移除命令/补全（若脚本被 source 执行时可生效）
