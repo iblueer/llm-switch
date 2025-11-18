@@ -43,3 +43,61 @@ else
 fi
 
 printf '\nllm-switch 已卸载。若 shell 仍在运行，请执行：\n  exec "$SHELL" -l\n或手动 source 对应的 rc 文件以刷新环境。\n'
+
+# 额外处理：尝试从当前 Shell 会话中移除命令/补全（若脚本被 source 执行时可生效）
+
+# 检测是否被 source 执行：
+is_sourced=0
+if [ -n "${ZSH_EVAL_CONTEXT:-}" ]; then
+  case $ZSH_EVAL_CONTEXT in
+    *:file) is_sourced=1 ;;
+  esac
+elif [ -n "${BASH_SOURCE:-}" ]; then
+  if [ "${BASH_SOURCE[0]-}" != "$0" ]; then
+    is_sourced=1
+  fi
+fi
+
+remove_from_current_session() {
+  # 移除函数定义
+  if [ -n "${BASH_VERSION:-}" ]; then
+    if declare -F llm-switch >/dev/null 2>&1; then
+      unset -f llm-switch 2>/dev/null || true
+    fi
+    # 移除 bash 补全
+    if type complete >/dev/null 2>&1; then
+      complete -r llm-switch 2>/dev/null || true
+    fi
+  fi
+
+  if [ -n "${ZSH_VERSION:-}" ]; then
+    if typeset -f llm-switch >/dev/null 2>&1 || typeset -f -- llm-switch >/dev/null 2>&1; then
+      unfunction llm-switch 2>/dev/null || true
+    fi
+    # 移除 zsh 补全
+    if typeset -f compdef >/dev/null 2>&1; then
+      compdef -d llm-switch 2>/dev/null || true
+    fi
+  fi
+
+  # 移除可能的 alias
+  if alias llm-switch >/dev/null 2>&1; then
+    unalias llm-switch 2>/dev/null || true
+  fi
+
+  # 清理命令哈希表，避免旧路径缓存
+  hash -r 2>/dev/null || true
+
+  # 取消导出的相关变量（仅当前会话有效）
+  unset LLM_PROVIDER LLM_API_KEY LLM_BASE_URL LLM_MODEL_NAME 2>/dev/null || true
+  unset LLM_SWITCH_HOME LLMS_ENV_DIR LLMS_LAST LLMS_REQUIRED_VARS LLMS_SUBCOMMANDS 2>/dev/null || true
+}
+
+if [ "$is_sourced" = "1" ] || [ "${LLM_SWITCH_FORCE_UNLOAD:-0}" = "1" ]; then
+  remove_from_current_session
+  printf '\n已从当前会话移除 llm-switch 命令与补全。\n'
+else
+  printf '\n提示：当前 shell 会话中若仍能调用 llm-switch，这是因为函数仍在内存中。\n' >&2
+  printf '如需立即清除，请在当前 shell 执行： source "%s"\n' "$0" >&2
+  printf '或运行： exec "$SHELL" -l 以重启登录会话。\n' >&2
+fi
