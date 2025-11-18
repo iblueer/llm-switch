@@ -68,7 +68,7 @@ E
     chmod 600 "$DEFAULT_ENV" 2>/dev/null || true
   fi
 else
-  echo "[Step 2] 检测到已存在 $INSTALL_ROOT，跳过 default.env 创建，保持现有 envs 不变"
+  echo "[Step 2] 检测到已存在 ${INSTALL_ROOT}，跳过 default.env 创建，保持现有 envs 不变"
 fi
 
 echo "[Step 3] 生成 init：$INIT_FILE"
