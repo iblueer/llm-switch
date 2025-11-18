@@ -52,9 +52,9 @@ for _cand in "$HOME/.local/bin/llm-switch" "$HOME/bin/llm-switch"; do
         ;;
     esac
   elif [ -f "$_cand" ]; then
-    if grep -q "$INSTALL_ROOT/bin/llm-switch" "$_cand" 2>/dev/null \
-       || grep -q "$HOME/.llm-switch/bin" "$_cand" 2>/dev/null \
-       || grep -q '\\$HOME/.llm-switch/bin' "$_cand" 2>/dev/null; then
+    if grep -F -q "$INSTALL_ROOT/bin/llm-switch" "$_cand" 2>/dev/null \
+       || grep -F -q "$HOME/.llm-switch/bin" "$_cand" 2>/dev/null \
+       || grep -F -q '\\$HOME/.llm-switch/bin' "$_cand" 2>/dev/null; then
       rm -f -- "$_cand" && printf '🧹 已删除包装脚本：%s\n' "$_cand"
     fi
   fi
