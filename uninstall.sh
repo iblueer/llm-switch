@@ -42,6 +42,22 @@ else
   printf 'ℹ️  未发现 llm-switch 安装目录：%s\n' "$INSTALL_ROOT"
 fi
 
+# 尝试移除用户目录中的包装可执行文件（仅当指向/引用安装目录时）
+for _cand in "$HOME/.local/bin/llm-switch" "$HOME/bin/llm-switch"; do
+  if [ -L "$_cand" ]; then
+    _target="$(readlink "$_cand" 2>/dev/null || true)"
+    case "$_target" in
+      "$INSTALL_ROOT"/*)
+        rm -f -- "$_cand" && printf '🧹 已删除包装脚本：%s -> %s\n' "$_cand" "$_target"
+        ;;
+    esac
+  elif [ -f "$_cand" ]; then
+    if grep -q "$INSTALL_ROOT/bin/llm-switch" "$_cand" 2>/dev/null || grep -q "$HOME/.llm-switch/bin" "$_cand" 2>/dev/null; then
+      rm -f -- "$_cand" && printf '🧹 已删除包装脚本：%s\n' "$_cand"
+    fi
+  fi
+done
+
 printf '\nllm-switch 已卸载。若 shell 仍在运行，请执行：\n  exec "$SHELL" -l\n或手动 source 对应的 rc 文件以刷新环境。\n'
 
 # 额外处理：尝试从当前 Shell 会话中移除命令/补全（若脚本被 source 执行时可生效）
