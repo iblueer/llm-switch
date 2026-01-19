@@ -6,7 +6,7 @@
 typeset -g LLMS_ENV_DIR="$LLM_SWITCH_HOME/envs"
 typeset -g LLMS_LAST="$LLMS_ENV_DIR/last_choice"
 typeset -ga LLMS_REQUIRED_VARS=(LLM_PROVIDER LLM_API_KEY LLM_BASE_URL LLM_MODEL_NAME)
-typeset -ga LLMS_SUBCOMMANDS=(help list ls use new edit del delete rm show current open dir)
+typeset -ga LLMS_SUBCOMMANDS=(help list ls use visionuse new edit del delete rm show current open dir)
 
 _ls_info() { print -r -- "▸ $*"; }
 _ls_warn() { print -r -- "⚠ $*"; }
@@ -216,6 +216,13 @@ _ls_show() {
   printf '  %-18s = %s\n' LLM_API_KEY "${LLM_API_KEY:+<已设置>}"
   printf '  %-18s = %s\n' LLM_BASE_URL "${LLM_BASE_URL:-<未设置>}"
   printf '  %-18s = %s\n' LLM_MODEL_NAME "${LLM_MODEL_NAME:-<未设置>}"
+
+  if [[ -n "${LLM_VISION_API_KEY:-}" || -n "${LLM_VISION_MODEL_NAME:-}" ]]; then
+    print -r -- "Vision 变量："
+    printf '  %-18s = %s\n' LLM_VISION_API_KEY "${LLM_VISION_API_KEY:+<已设置>}"
+    printf '  %-18s = %s\n' LLM_VISION_BASE_URL "${LLM_VISION_BASE_URL:-<未设置>}"
+    printf '  %-18s = %s\n' LLM_VISION_MODEL_NAME "${LLM_VISION_MODEL_NAME:-<未设置>}"
+  fi
 }
 
 _ls_cmd_list() {
@@ -251,6 +258,44 @@ _ls_cmd_switch() {
   else
     return 1
   fi
+}
+
+_ls_cmd_vision_use() {
+  local name="$1"
+  [[ -z "$name" ]] && { _ls_err "用法：llm-switch visionuse <name>"; return 2; }
+  [[ "$name" == *.env ]] || name="$name.env"
+  local file="$LLMS_ENV_DIR/$name"
+  if [[ ! -f "$file" ]]; then
+    _ls_err "未找到环境文件：$file"
+    return 1
+  fi
+
+  local vars_output
+  vars_output=$(
+    unset LLM_API_KEY LLM_BASE_URL LLM_MODEL_NAME LLM_VISION_API_KEY LLM_VISION_BASE_URL LLM_VISION_MODEL_NAME
+    source "$file" >/dev/null 2>&1
+    # 优先使用 Vision 专属变量，否则使用通用变量回退
+    V_KEY="${LLM_VISION_API_KEY:-$LLM_API_KEY}"
+    V_URL="${LLM_VISION_BASE_URL:-$LLM_BASE_URL}"
+    V_MODEL="${LLM_VISION_MODEL_NAME:-$LLM_MODEL_NAME}"
+    printf "%s\n%s\n%s" "$V_KEY" "$V_URL" "$V_MODEL"
+  )
+
+  local -a lines
+  lines=("${(f)vars_output}")
+
+  if [[ ${#lines} -lt 3 ]]; then
+      _ls_err "无法从 $name 加载 vision 变量（或变量为空）"
+      return 1
+  fi
+
+  export LLM_VISION_API_KEY="${lines[1]}"
+  export LLM_VISION_BASE_URL="${lines[2]}"
+  export LLM_VISION_MODEL_NAME="${lines[3]}"
+  export LLM_VISION_MODEL="${lines[3]}"
+
+  _ls_ok "已设置 Vision 变量为环境：${name%.env}"
+  _ls_show
 }
 
 _ls_template() {
@@ -328,7 +373,7 @@ _llm_switch_zsh_complete() {
     return
   fi
   case "${words[2]}" in
-    use|new|edit|del|delete|rm)
+    use|visionuse|new|edit|del|delete|rm)
       (( ${#envs[@]} > 0 )) && compadd -Q -S '' -a envs
       ;;
   esac
@@ -339,6 +384,7 @@ _ls_help() {
 用法：
   llm-switch list                 列出全部环境
   llm-switch use <name>           切换到 <name> 环境（无需 .env 后缀）
+  llm-switch visionuse <name>     切换 Vision 变量到 <name> 环境
   llm-switch new <name>           新建 <name>.env，并打开编辑器
   llm-switch edit <name>          编辑 <name>.env（不存在则创建模板）
   llm-switch del <name>           删除 <name>.env（需输入 yes 确认）
@@ -362,6 +408,7 @@ llm-switch() {
     ""|help|-h|--help) _ls_help ;;
     list|ls)            _ls_cmd_list ;;
     use)                _ls_cmd_switch "$1" ;;
+    visionuse)          _ls_cmd_vision_use "$1" ;;
     new)                _ls_cmd_new "$@" ;;
     edit)               _ls_cmd_edit "$@" ;;
     del|delete|rm)      _ls_cmd_del "$@" ;;

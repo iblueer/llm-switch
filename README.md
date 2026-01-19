@@ -53,10 +53,8 @@ source ~/.bashrc
 llm-switch list
 ```
 
-## 默认环境文件
-
-安装脚本会在 `~/.llm-switch/envs/default.env` 生成默认模板：
-
+## 环境配置
+每个环境文件（.env）包含：
 ```sh
 export LLM_PROVIDER=""
 export LLM_API_KEY=""
@@ -64,7 +62,25 @@ export LLM_BASE_URL=""
 export LLM_MODEL_NAME=""
 ```
 
-根据实际需求填写后，可通过 `llm-switch default` 快速生效。
+### Vision 视觉能力支持
+除了标准 LLM 变量，本工具还通过 `visionuse` 指令支持视觉相关环境变量：
+- `LLM_VISION_MODEL_NAME` (或 `LLM_VISION_MODEL`)
+- `LLM_VISION_API_KEY`
+- `LLM_VISION_BASE_URL`
+
+用法示例：
+```sh
+llm-switch use gpt4o        # 切换主 LLM 变量
+llm-switch visionuse o1     # 切换 Vision 相关变量为 o1 环境的配置
+```
+`visionuse` 会自动从指定的配置文件中提取对应的 API Key 和 URL。
+
+## 常用指令
+- `llm-switch list`: 列出所有环境
+- `llm-switch use <name>`: 切换到指定环境
+- `llm-switch visionuse <name>`: 设置 Vision 变量
+- `llm-switch show`: 显示当前生效变量
+- `llm-switch new <name>`: 创建新环境
 
 ## 调试
 
