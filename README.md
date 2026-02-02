@@ -63,17 +63,20 @@ export LLM_MODEL_NAME=""
 ```
 
 ### Vision 视觉能力支持
-除了标准 LLM 变量，本工具还通过 `visionuse` 指令支持视觉相关环境变量：
+`visionuse` 主要用于配合 [llm-inline](https://github.com/iblueer/llm-inline) 的 `genimage` 技能，为图像生成设置独立的 Vision 模型环境变量。
+
+支持的环境变量：
 - `LLM_VISION_MODEL_NAME` (或 `LLM_VISION_MODEL`)
 - `LLM_VISION_API_KEY`
 - `LLM_VISION_BASE_URL`
 
 用法示例：
 ```sh
-llm-switch use gpt4o        # 切换主 LLM 变量
-llm-switch visionuse o1     # 切换 Vision 相关变量为 o1 环境的配置
+llm-switch use doubao       # 切换主 LLM（用于文本）
+llm-switch visionuse gpt4o  # 切换 Vision 模型（用于图像生成）
+llmi genimage "一只猫"       # 使用 Vision 模型生成图像
 ```
-`visionuse` 会自动从指定的配置文件中提取对应的 API Key 和 URL。
+`visionuse` 会自动从指定的配置文件中提取对应的 API Key 和 URL，使主 LLM 和视觉模型可以独立配置、同时生效。
 
 ## 常用指令
 - `llm-switch list`: 列出所有环境
